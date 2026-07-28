@@ -151,23 +151,6 @@ footer{background:var(--v1);padding:16px 32px;display:flex;align-items:center;ju
 <div id="error-box"><div class="error-title">Erro</div><div class="error-msg" id="error-msg"></div></div>
 
 <main id="main-content" style="display:none">
-  <div class="filtros-bar">
-    <div class="filtro-group"><span class="filtro-label">Visão</span>
-      <select id="fVisao" onchange="onVisaoChange()">
-        <option value="consolidado">Consolidado</option>
-        <option value="regiao">Por Região</option>
-        <option value="loja">Por Loja</option>
-      </select>
-    </div>
-    <div class="filtro-sep"></div>
-    <div class="filtro-group" id="grpRegiao" style="display:none"><span class="filtro-label">Região</span>
-      <select id="fRegiao" onchange="renderTudo()"></select>
-    </div>
-    <div class="filtro-group" id="grpLoja" style="display:none"><span class="filtro-label">Loja</span>
-      <select id="fLoja" onchange="renderTudo()"></select>
-    </div>
-  </div>
-
   <div class="page-header">
     <div><div class="page-title">Forecast 2026</div><div class="page-sub" id="page-sub"></div></div>
     <div class="badge" id="badge-periodo"></div>
@@ -296,9 +279,6 @@ function fmtAH(v,b){
 const neg=v=>v<0?'neg':'';
 
 function filtrar(rows){
-  const v=document.getElementById('fVisao').value;
-  if(v==='regiao')return rows.filter(r=>REGIOES[r.loja]===document.getElementById('fRegiao').value);
-  if(v==='loja')  return rows.filter(r=>r.loja===document.getElementById('fLoja').value);
   return rows;
 }
 
@@ -846,9 +826,7 @@ function renderTudo(){
   const nR=mesesReal.length,nO=mesesOrc.length;
   const lReal=nR>0?`${NOM[parseInt(mesesReal[0])-1]}–${NOM[parseInt(mesesReal[nR-1])-1]}`:'Real';
   const lOrc =nO>0?`${NOM[parseInt(mesesOrc[0])-1]}–${NOM[parseInt(mesesOrc[nO-1])-1]}`:'Orç';
-  const vis=document.getElementById('fVisao').value;
-  const visLbl=vis==='consolidado'?'Consolidado':vis==='regiao'?document.getElementById('fRegiao').value:document.getElementById('fLoja').value;
-  document.getElementById('page-sub').textContent=`TerraZoo · ${visLbl} · ${nR} meses realizados · ${nO} meses orçados`;
+  document.getElementById('page-sub').textContent=`TerraZoo · Consolidado · ${nR} meses realizados · ${nO} meses orçados`;
   document.getElementById('badge-periodo').textContent=`2026 · ${nR} real + ${nO} orç`;
   renderBase(rows,mesesReal,mesesOrc,lReal,lOrc);
   renderTendencia(rows,mesesReal,mesesOrc,lReal,lOrc);
@@ -858,13 +836,6 @@ function renderTudo(){
     document.getElementById('error-box').style.display='block';
     document.getElementById('error-msg').textContent='Erro renderTudo: '+e.message+' | '+e.stack;
   }
-}
-
-function onVisaoChange(){
-  const v=document.getElementById('fVisao').value;
-  document.getElementById('grpRegiao').style.display=v==='regiao'?'flex':'none';
-  document.getElementById('grpLoja').style.display=v==='loja'?'flex':'none';
-  renderTudo();
 }
 
 // ══════════════════════════════════════════
@@ -1117,10 +1088,6 @@ function montarDados(data){
       realizado: Number(r.realizado||0),
       orcado:    Number(r.orcado||0),
     }));
-    const lojas=[...new Set(DADOS.map(r=>r.loja))].sort();
-    const grupos=[...new Set(Object.values(REGIOES))].sort();
-    lojas.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;document.getElementById('fLoja').appendChild(o);});
-    grupos.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;document.getElementById('fRegiao').appendChild(o);});
     document.getElementById('loading').style.display='none';
     document.getElementById('main-content').style.display='block';
     renderTudo();

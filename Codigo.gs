@@ -8,11 +8,11 @@ const SHEET_USERS = 'USUARIOS';   // aba: nome | email | senha | papel | ativo
 // apenas evita uso casual da URL do backend por quem a encontrar solta.
 const CHAVE_ACESSO = '7c19a4f2e8b6d035a1f94c72e0b8d6153ea4c9f7b2d81065';
 
-// cod_conta únicos que compõem o forecast — evita dupla contagem
+// cod_conta únicos que compõem o forecast — evita dupla contagem.
+// Corresponde 1:1 às 26 linhas do array LINHAS no index.html (mesma ordem).
 const COD_FORECAST = [
-  1, 100100, 100400, 100500, 200000, 213000, 300000, 400000, 414000, 415000,
-  416000, 500000, 617000, 700000, 1000000, 1018000, 1019000, 1020000, 1021000,
-  1022000, 1023000, 1024000, 1025000, 1100000, 1200000, 1300000, 1400000,
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+  17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
 ];
 
 function doGet(e) {

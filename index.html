@@ -1058,10 +1058,9 @@ async function fazerLogin(){
   if(!email||!senha){erro.textContent='Preencha e-mail e senha.';return;}
   erro.textContent='';btn.disabled=true;btn.textContent='Entrando...';
   try{
-    const resp=await fetch(API_POST,{
-      method:'POST',
-      body:JSON.stringify({acao:'login',email,senha})
-    });
+    const fd=new FormData();
+    fd.append('payload',JSON.stringify({acao:'login',email,senha}));
+    const resp=await fetch(API_POST,{method:'POST',body:fd});
     const data=await resp.json();
     if(data.status!=='ok'){erro.textContent=data.message||'Falha no login.';btn.disabled=false;btn.textContent='Entrar';return;}
     _cred={email,senha};
@@ -1086,10 +1085,9 @@ function logout(){
 
 async function carregarDados(){
   try{
-    const resp=await fetch(API_POST,{
-      method:'POST',
-      body:JSON.stringify({acao:'dados',tipo:'forecast',email:_cred.email,senha:_cred.senha})
-    });
+    const fd=new FormData();
+    fd.append('payload',JSON.stringify({acao:'dados',tipo:'forecast',email:_cred.email,senha:_cred.senha}));
+    const resp=await fetch(API_POST,{method:'POST',body:fd});
     const data=await resp.json();
     if(data.status!=='ok')throw new Error(data.message);
     REGIOES=data.regioes||{};

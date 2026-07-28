@@ -363,14 +363,19 @@ function renderBase(rows,mesesReal,mesesOrc,lReal,lOrc){
 // ══════════════════════════════════════════
 // ② FORECAST TENDÊNCIA
 // ══════════════════════════════════════════
+// Linhas não recorrentes/esporádicas: um fator realizado÷orçado sobre uma base
+// pequena explode (ex: 2,4× em "Outras Receitas..."), distorcendo o EBITDA.
+// Mantêm o orçado Jul-Dez como projeção em vez de escalar pelo fator.
+const LINHAS_SEM_TENDENCIA=new Set(['Outras Receitas/Despesas Operacionais','Resultados Não Recorentes']);
 function renderTendencia(rows,mesesReal,mesesOrc,lReal,lOrc){
   const calc={};
   LINHAS.forEach(({l})=>{
     const realP=somaReal(rows,l,mesesReal);
     const orcP =somaOrc(rows,l,mesesReal);
     const orcF =somaOrc(rows,l,mesesOrc);
-    const fator=(orcP!==0)?realP/orcP:1;
-    const fcstF=orcF*fator;
+    const semTendencia=LINHAS_SEM_TENDENCIA.has(l);
+    const fator=(!semTendencia && orcP!==0)?realP/orcP:1;
+    const fcstF=semTendencia?orcF:orcF*fator;
     const fcstTot=realP+fcstF;
     const orcTot=orcP+orcF;
     calc[l]={realP,orcP,orcF,fcstF,fcstTot,orcTot,fator};

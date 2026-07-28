@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TerraZoo — Forecast 2026</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Calibri:wght@300;400;600&display=swap');
+:root{
+  --v1:#1a2e1f;--v2:#2E7D32;--v3:#4CAF50;--v4:#A5D6A7;--v5:#b2dfc4;--v6:#E8F5E9;
+  --txt:#111;--muted:#555;--borda:#C8E6C9;--fundo:#fff;
+  --red:#9C0006;--amber:#FFC000;--green:#2E7D32;
+  --col-real:#1a2e1f;--col-orc:#2E7D32;--col-total:#388E3C;--col-orig:#558B2F;
+  --row-total:#1a2e1f;--row-total-txt:#fff;
+  --row-sub:#2E7D32;--row-sub-txt:#fff;
+  --row-hi:#b2dfc4;--row-hi-txt:#1a2e1f;
+  --row-grp:#E8F5E9;--row-grp-txt:#555;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Calibri','Segoe UI',sans-serif;background:#fff;color:var(--txt);min-height:100vh;font-size:13px}
+header{background:var(--v1);height:64px;padding:0 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.logo{font-size:22px;font-weight:600;color:#fff}.logo span{color:var(--v4)}
+.header-right{display:flex;align-items:center;gap:12px}
+.btn-back{font-size:12px;color:var(--v4);background:none;border:1px solid rgba(165,214,167,.3);padding:5px 12px;border-radius:6px;cursor:pointer;font-family:inherit;text-decoration:none;transition:all .2s}
+.btn-export{font-size:12px;color:#fff;background:var(--v2);border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;transition:background .2s}
+.btn-export:hover{background:var(--v3);color:var(--v1)}
+#loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px}
+.spinner{width:36px;height:36px;border:3px solid var(--borda);border-top-color:var(--v2);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#error-box{display:none;max-width:500px;margin:80px auto;padding:32px;background:#fff3f3;border:1px solid #ffcdd2;border-radius:12px;text-align:center}
+.error-title{font-size:18px;font-weight:600;color:var(--red);margin-bottom:8px}
+.error-msg{font-size:13px;color:#666;line-height:1.6}
+main{max-width:1500px;margin:0 auto;padding:24px 20px 80px}
+.filtros-bar{background:#fff;border:1px solid var(--borda);border-radius:10px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.filtro-group{display:flex;align-items:center;gap:8px}
+.filtro-label{font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+select{background:var(--v6);border:1px solid var(--borda);color:var(--txt);font-size:12px;padding:6px 10px;border-radius:7px;font-family:inherit;cursor:pointer}
+select:focus{outline:none;border-color:var(--v3)}
+.filtro-sep{width:1px;height:28px;background:var(--borda)}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.page-title{font-size:22px;font-weight:600;color:var(--v1)}
+.page-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.badge{background:var(--v5);color:var(--v1);font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;white-space:nowrap}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+.kpi{background:#fff;border:1px solid var(--borda);border-radius:10px;padding:16px 14px;border-left:4px solid var(--v2)}
+.kpi-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--v2);margin-bottom:6px}
+.kpi-value{font-size:20px;font-weight:600;color:var(--v1);letter-spacing:-0.5px;line-height:1.1}
+.kpi-sub{font-size:11px;margin-top:5px;color:var(--muted)}
+.kpi-up{color:var(--green)!important;font-weight:600}
+.kpi-dn{color:var(--red)!important;font-weight:600}
+.kpi-tend{border-left-color:var(--col-orc)!important}
+.kpi-sim{border-left-color:var(--col-total)!important}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--borda);border-radius:10px;background:#fff;margin-bottom:28px}
+.tbl-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--borda)}
+.tbl-title{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--v2)}
+.tbl-outer{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:900px;table-layout:fixed}
+thead tr.gr1 th{background:var(--v1);color:#fff;font-weight:600;font-size:11px;letter-spacing:.8px;text-transform:uppercase;padding:10px 8px;text-align:center;border-right:1px solid rgba(255,255,255,.1);white-space:nowrap}
+thead tr.gr2 th{background:#263a2b;color:rgba(255,255,255,.75);font-size:10px;font-weight:500;padding:6px 8px;text-align:right;border-right:1px solid rgba(255,255,255,.08);white-space:nowrap}
+thead tr.gr1 th:first-child,thead tr.gr2 th:first-child{text-align:left;padding-left:14px}
+th.th-dre {background:var(--v1)}
+th.th-real{background:var(--col-real)}
+th.th-orc {background:var(--col-orc)}
+th.th-total{background:var(--col-total)}
+th.th-orig{background:var(--col-orig)}
+tbody tr{border-bottom:1px solid #f0f5f0}
+tbody tr:hover{filter:brightness(.97)}
+td{padding:5px 8px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+td:first-child{text-align:left;padding-left:14px;border-right:1px solid #e0ebe0}
+.neg{color:var(--red)!important}
+.av{color:var(--muted);font-size:11px}
+.ah-pos{color:var(--green);font-weight:600}
+.ah-neg{color:var(--red);font-weight:600}
+.ah-nt{color:var(--muted)}
+tr.row-total    td{background:var(--row-total)!important;color:var(--row-total-txt)!important;font-weight:700}
+tr.row-subtotal td{background:var(--row-sub)!important;  color:var(--row-sub-txt)!important;  font-weight:600}
+tr.row-highlight td{background:var(--row-hi)!important;  color:var(--row-hi-txt)!important;   font-weight:600}
+tr.row-group    td{background:var(--row-grp);color:var(--row-grp-txt)}
+tr.row-total    td.ah-pos,tr.row-total    td.ah-neg{color:#fff!important}
+tr.row-subtotal td.ah-pos,tr.row-subtotal td.ah-neg{color:#fff!important}
+/* SIMULADOR */
+.sim-input{width:60px;border:1px solid var(--borda);border-radius:4px;padding:3px 5px;font-size:11px;font-family:inherit;text-align:right;background:#fff;color:var(--txt)}
+.sim-input:focus{outline:none;border-color:var(--v3)}
+tr.row-total .sim-input,tr.row-subtotal .sim-input{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff}
+tr.row-highlight .sim-input{background:rgba(255,255,255,.6)}
+.sim-bar{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--borda);background:#f8fdf8}
+.sim-bar-lbl{font-size:11px;color:var(--muted);flex:1}
+.sens-grp{display:flex;flex-direction:column;gap:3px}
+.sens-lbl{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+#tbl-sens{width:100%;border-collapse:collapse}
+#tbl-sens td,#tbl-sens th{text-align:center;padding:8px 10px;font-size:12px;border:1px solid var(--borda)}
+#tbl-sens thead th{background:var(--v1);color:#fff;font-weight:600}
+#tbl-sens .sens-row-hdr{background:var(--v2);color:#fff;font-weight:600}
+#tbl-sens .sens-base{background:var(--amber);color:#1a2e1f;font-weight:700;outline:2px solid var(--v1)}
+#tbl-sens .sens-pos{background:#e8f5e9}
+#tbl-sens .sens-neg{background:#fff3f3;color:var(--red)}
+.btn-sim{font-size:12px;color:#fff;background:var(--v2);border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600}
+.btn-rst{font-size:12px;color:var(--v2);background:none;border:1px solid var(--borda);padding:6px 12px;border-radius:6px;cursor:pointer;font-family:inherit}
+footer{background:var(--v1);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;margin-top:40px}
+.footer-logo{font-size:13px;font-weight:600;color:rgba(255,255,255,.4)}.footer-logo span{color:var(--v4)}
+.footer-info{font-size:11px;color:rgba(255,255,255,.25);letter-spacing:1px}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(3,1fr)}}
+#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#2E7D32,#1a6b3c);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
+.login-card{background:#3a9150;border-radius:14px;padding:40px 44px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-logo{text-align:center;font-size:30px;font-weight:700;color:#fff;letter-spacing:-1px}
+.login-logo span{color:#a5d6a7}
+.login-sub{text-align:center;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-top:4px}
+.login-divider{height:1px;background:rgba(255,255,255,.2);margin:20px 0}
+.login-title{text-align:center;font-size:17px;font-weight:600;color:#fff;margin-bottom:22px}
+.login-lbl{display:block;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:6px}
+.login-input{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:8px;border:none;font-size:14px;font-family:inherit;margin-bottom:16px;background:#eef5ee;color:#111}
+.login-input-dark{background:rgba(0,0,0,.15);color:#fff}
+.login-input-dark::placeholder{color:rgba(255,255,255,.5)}
+.login-check{display:flex;align-items:center;gap:8px;font-size:13px;color:#fff;margin-bottom:20px;cursor:pointer}
+.login-btn{width:100%;padding:13px;border:none;border-radius:8px;background:#fff;color:#2E7D32;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:opacity .2s}
+.login-btn:hover{opacity:.9}
+.login-btn:disabled{opacity:.6;cursor:wait}
+.login-erro{margin-top:14px;font-size:13px;color:#ffd5d5;text-align:center;min-height:18px}
+</style>
+</head>
+<body>
+<!-- ══ TELA DE LOGIN ══ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">terra<span>ZOO</span></div>
+    <div class="login-sub">Forecast 2026</div>
+    <div class="login-divider"></div>
+    <div class="login-title">Acesso ao Sistema</div>
+    <label class="login-lbl">Login</label>
+    <input type="email" id="loginEmail" class="login-input" placeholder="seu.email@terrazoo.com.br" autocomplete="username">
+    <label class="login-lbl">Senha</label>
+    <input type="password" id="loginSenha" class="login-input login-input-dark" placeholder="Digite sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()">
+    <label class="login-check"><input type="checkbox" id="loginLembrar" checked> Lembrar login</label>
+    <button class="login-btn" onclick="fazerLogin()">Entrar</button>
+    <div id="login-erro" class="login-erro"></div>
+  </div>
+</div>
+
+<div id="app-shell" style="display:none">
+<header>
+  <div class="logo">terra<span>ZOO</span></div>
+  <div class="header-right">
+    <span style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4)">Forecast 2026</span>
+    <span id="userLbl" style="font-size:12px;color:rgba(255,255,255,.7)"></span>
+    <button class="btn-export" onclick="exportarExcel()">⬇ Exportar Excel</button>
+    <button class="btn-back" onclick="logout()" style="cursor:pointer">Sair</button>
+  </div>
+</header>
+
+<div id="loading"><div class="spinner"></div><div style="font-size:14px;color:var(--muted)">Carregando dados...</div></div>
+<div id="error-box"><div class="error-title">Erro</div><div class="error-msg" id="error-msg"></div></div>
+
+<main id="main-content" style="display:none">
+  <div class="filtros-bar">
+    <div class="filtro-group"><span class="filtro-label">Visão</span>
+      <select id="fVisao" onchange="onVisaoChange()">
+        <option value="consolidado">Consolidado</option>
+        <option value="regiao">Por Região</option>
+        <option value="loja">Por Loja</option>
+      </select>
+    </div>
+    <div class="filtro-sep"></div>
+    <div class="filtro-group" id="grpRegiao" style="display:none"><span class="filtro-label">Região</span>
+      <select id="fRegiao" onchange="renderTudo()"></select>
+    </div>
+    <div class="filtro-group" id="grpLoja" style="display:none"><span class="filtro-label">Loja</span>
+      <select id="fLoja" onchange="renderTudo()"></select>
+    </div>
+  </div>
+
+  <div class="page-header">
+    <div><div class="page-title">Forecast 2026</div><div class="page-sub" id="page-sub"></div></div>
+    <div class="badge" id="badge-periodo"></div>
+  </div>
+
+  <!-- ── FORECAST BASE ── -->
+  <div class="tbl-wrap">
+    <div class="tbl-header"><div class="tbl-title">① Forecast Base — Real + Orçado</div></div>
+    <div class="kpis" id="kpi-base"></div>
+    <div class="tbl-outer"><table><thead id="thead-base"></thead><tbody id="tbody-base"></tbody></table></div>
+  </div>
+
+  <!-- ── FORECAST TENDÊNCIA ── -->
+  <div class="tbl-wrap">
+    <div class="tbl-header"><div class="tbl-title">② Forecast Tendência — Real + Orçado × Fator por Linha</div></div>
+    <div class="kpis" id="kpi-tend"></div>
+    <div class="tbl-outer"><table><thead id="thead-tend"></thead><tbody id="tbody-tend"></tbody></table></div>
+  </div>
+
+  <!-- ── SIMULADOR ── -->
+  <div class="tbl-wrap">
+    <div class="tbl-header"><div class="tbl-title">③ Simulador — Indexador de Faturamento</div></div>
+    <div class="sim-bar">
+      <span class="sim-bar-lbl">Ajuste o faturamento e as demais linhas recalculam pela participação (AV%) do realizado. Custos com pessoal e aluguel são mantidos fixos.</span>
+      <span style="font-size:12px;font-weight:600;color:var(--muted)">Indexador Faturamento:</span>
+      <input class="sim-input" id="idxFat" type="number" step="0.5" value="0" onchange="recalcSim()" style="width:80px">
+      <span style="font-size:12px;color:var(--muted)">%</span>
+      <button class="btn-rst" onclick="resetSim()">↺ Resetar</button>
+    </div>
+    <div class="kpis" id="kpi-sim" style="grid-template-columns:repeat(6,1fr)"></div>
+    <div class="tbl-outer"><table><thead id="thead-sim"></thead><tbody id="tbody-sim"></tbody></table></div>
+  </div>
+
+  <!-- ── SENSIBILIDADE ── -->
+  <div class="tbl-wrap">
+    <div class="tbl-header"><div class="tbl-title">④ Simulação de Cenário — EBITDA Ajustado</div></div>
+    <div class="sim-bar" style="flex-wrap:wrap;gap:18px">
+      <div class="sens-grp"><span class="sens-lbl">Faturamento (variação %)</span><input class="sim-input" id="cFat" type="number" step="1" value="0" onchange="renderSensibilidade()" style="width:90px"></div>
+      <div class="sens-grp"><span class="sens-lbl">Margem Bruta (% da RL)</span><input class="sim-input" id="cMb" type="number" step="0.5" onchange="renderSensibilidade()" style="width:90px"></div>
+      <div class="sens-grp"><span class="sens-lbl">SG&A (% da RL)</span><input class="sim-input" id="cSga" type="number" step="0.5" onchange="renderSensibilidade()" style="width:90px"></div>
+      <button class="btn-rst" onclick="resetCenario()">↺ Igualar ao Simulador</button>
+    </div>
+    <div class="kpis" id="kpi-cenario" style="grid-template-columns:repeat(4,1fr)"></div>
+  </div>
+
+  <!-- ── MATRIZ DE APOIO ── -->
+  <div class="tbl-wrap">
+    <div class="tbl-header"><div class="tbl-title">⑤ Matriz de Sensibilidade — EBITDA Ajustado (Faturamento × Margem × SG&A)</div></div>
+    <div class="sim-bar" style="flex-wrap:wrap;gap:18px">
+      <div class="sens-grp"><span class="sens-lbl">Passo Faturamento (pp)</span><input class="sim-input" id="mxFatStep" type="number" step="1" value="5" onchange="renderMatriz()"></div>
+      <div class="sens-grp"><span class="sens-lbl">Passo Margem (pp)</span><input class="sim-input" id="mxColStep" type="number" step="0.5" value="1" onchange="renderMatriz()"></div>
+      <div class="filtro-sep"></div>
+      <div class="sens-grp"><span class="sens-lbl">Nível de SG&A (% da RL)</span><input class="sim-input" id="mxSga" type="number" step="0.5" onchange="renderMatriz()" style="width:100px"></div>
+      <div class="sens-grp"><span class="sens-lbl">Passo SG&A (pp)</span><input class="sim-input" id="mxSgaStep" type="number" step="0.5" value="1" onchange="renderMatriz()"></div>
+      <div class="sens-grp"><span class="sens-lbl">&nbsp;</span>
+        <div style="display:flex;gap:4px;align-items:center">
+          <button class="btn-rst" style="padding:4px 8px" onclick="mxSgaNav(-1)">◀</button>
+          <span id="mxSgaAtual" style="font-size:12px;font-weight:600;min-width:90px;text-align:center;color:var(--v1)"></span>
+          <button class="btn-rst" style="padding:4px 8px" onclick="mxSgaNav(1)">▶</button>
+        </div>
+      </div>
+    </div>
+    <div class="tbl-outer"><table id="tbl-sens"><thead id="thead-sens"></thead><tbody id="tbody-sens"></tbody></table></div>
+    <div id="esforco-sga" style="padding:14px 18px;font-size:13px;font-weight:600;color:var(--v1);border-top:1px solid var(--borda)"></div>
+    <div style="padding:10px 18px;font-size:11px;color:var(--muted)">Valores em R$. Linhas = variação do faturamento · Colunas = Margem Bruta % · A matriz inteira reflete o <b>Nível de SG&A</b> selecionado acima (navegue com ◀ ▶ para ver outros níveis). Célula âmbar = cenário do simulador atual.</div>
+  </div>
+</main>
+</div><!-- /app-shell -->
+
+<footer>
+  <div class="footer-logo">terra<span>ZOO</span></div>
+  <div class="footer-info">FORECAST 2026 · TERRAZOO</div>
+</footer>
+
+<script>
+let DADOS=[],REGIOES={};
+const NOM=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const MESES_ANO=['01','02','03','04','05','06','07','08','09','10','11','12'];
+
+const LINHAS=[
+  {l:'Receita Bruta',                        c:'row-subtotal'},
+  {l:'Receita com Revenda de Mercadorias',   c:'row-group'},
+  {l:'Receita com Serviços',                 c:'row-group'},
+  {l:'Ajuste Intercompany',                  c:'row-group'},
+  {l:'Impostos S/ Vendas',                   c:'row-highlight'},
+  {l:'Receita Líquida',                      c:'row-total'},
+  {l:'CMV & CSP',                            c:'row-total'},
+  {l:'Custo das Mercadorias Vendidas',       c:'row-group'},
+  {l:'Ajuste Custo Intercompany',            c:'row-group'},
+  {l:'Custo dos Serviços Prestados',         c:'row-group'},
+  {l:'Lucro Bruto',                          c:'row-highlight'},
+  {l:'Verbas Comerciais',                    c:'row-group'},
+  {l:'Lucro Bruto Ajustado',                 c:'row-highlight'},
+  {l:'SG&A',                                 c:'row-subtotal'},
+  {l:'Comissões sobre Vendas',               c:'row-group'},
+  {l:'Gastos com Pessoal Comercial',         c:'row-group'},
+  {l:'Gastos com Pessoal - SG&A',            c:'row-group'},
+  {l:'Despesas Comerciais',                  c:'row-group'},
+  {l:'Despesas com Distribuição',            c:'row-group'},
+  {l:'Despesas Administrativas',             c:'row-group'},
+  {l:'Despesas Tributárias',                 c:'row-group'},
+  {l:'Aluguel',                              c:'row-group'},
+  {l:'Outras Receitas/Despesas Operacionais',c:'row-highlight'},
+  {l:'EBITDA',                               c:'row-total'},
+  {l:'Resultados Não Recorentes',            c:'row-group'},
+  {l:'EBITDA Ajustado',                      c:'row-total'},
+];
+
+// ── Helpers ──
+const fmtN=v=>{
+  const s=Math.round(Math.abs(v)).toLocaleString('pt-BR');
+  return v<0?'-'+s:s;
+};
+function fmtM(v){
+  const a=Math.abs(v);
+  const s=a>=1e6?'R$ '+(a/1e6).toFixed(1).replace('.',',')+'M':
+          a>=1e3?'R$ '+(a/1e3).toFixed(0)+'K':'R$ '+Math.round(a).toLocaleString('pt-BR');
+  return v<0?`-${s}`:s;
+}
+const fmtAV=(v,b)=>b?(v/b*100).toFixed(1).replace('.',',')+' %':'-';
+function fmtAH(v,b){
+  if(!b||b===0)return{txt:'-',cls:'ah-nt'};
+  const p=(v-b)/Math.abs(b)*100;
+  return{txt:(p>=0?'+':'')+p.toFixed(1).replace('.',',')+' %',cls:p>0?'ah-pos':p<0?'ah-neg':'ah-nt'};
+}
+const neg=v=>v<0?'neg':'';
+
+function filtrar(rows){
+  const v=document.getElementById('fVisao').value;
+  if(v==='regiao')return rows.filter(r=>REGIOES[r.loja]===document.getElementById('fRegiao').value);
+  if(v==='loja')  return rows.filter(r=>r.loja===document.getElementById('fLoja').value);
+  return rows;
+}
+
+function somaReal(rows,linha,meses){
+  return rows.filter(r=>r.linha_dre===linha&&r.mes_ano.startsWith('2026')&&meses.includes(r.mes_ano.slice(5,7)))
+    .reduce((s,r)=>s+r.realizado/100,0);
+}
+function somaOrc(rows,linha,meses){
+  return rows.filter(r=>r.linha_dre===linha&&r.mes_ano.startsWith('2026')&&meses.includes(r.mes_ano.slice(5,7)))
+    .reduce((s,r)=>s+r.orcado/100,0);
+}
+
+// ── Thead genérico ──
+function buildThead(id,lReal,lOrc,extraCols){
+  // extraCols = array de {label,sub,cls,colspan}
+  const el=document.getElementById(id);
+  const cg=`<colgroup><col style="width:310px">${extraCols.map(()=>'<col style="width:90px">').join('')}</colgroup>`;
+  const gr1=extraCols.map(e=>`<th class="${e.cls}" colspan="${e.colspan||1}">${e.label}</th>`).join('');
+  const gr2=extraCols.map(e=>`<th class="${e.cls}">${e.sub}</th>`).join('');
+  el.innerHTML=cg+`
+    <tr class="gr1"><th class="th-dre" rowspan="2">Linha DRE</th>${gr1}</tr>
+    <tr class="gr2">${gr2}</tr>`;
+}
+
+// ── KPIs genérico ──
+function buildKpis(elId,items){
+  document.getElementById(elId).innerHTML=items.map(k=>`
+    <div class="kpi${k.extra||''}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-sub ${k.subCls||''}">${k.sub}</div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+// ① FORECAST BASE
+// ══════════════════════════════════════════
+function renderBase(rows,mesesReal,mesesOrc,lReal,lOrc){
+  const mesesTodos=MESES_ANO;
+  const calc={};
+  LINHAS.forEach(({l})=>{
+    const real=somaReal(rows,l,mesesReal);
+    const orc =somaOrc(rows,l,mesesOrc);
+    const orig=somaOrc(rows,l,mesesTodos);
+    calc[l]={real,orc,total:real+orc,orig};
+  });
+  const rl=calc['Receita Líquida'],rb=calc['Receita Bruta'],mb=calc['Lucro Bruto Ajustado'],eb=calc['EBITDA Ajustado'],sg=calc['SG&A'],ebt=calc['EBITDA'];
+  buildKpis('kpi-base',[
+    {label:'Receita Bruta',value:fmtM(rb.total),sub:`Real ${fmtM(rb.real)} · Orç ${fmtM(rb.orc)}`},
+    {label:'Receita Líquida',value:fmtM(rl.total),sub:`AV% ${fmtAV(rl.total,rb.total)} da RB`},
+    {label:'Margem Bruta Ajustada',value:fmtM(mb.total),sub:`${fmtAV(mb.total,rl.total)} da RL`,subCls:mb.total>=0?'kpi-up':'kpi-dn'},
+    {label:'SG&A',value:fmtM(sg.total),sub:fmtAH(sg.total,sg.orig).txt+' vs Orç',subCls:fmtAH(sg.total,sg.orig).cls==='ah-pos'?'kpi-dn':'kpi-up'},
+    {label:'EBITDA',value:fmtM(ebt.total),sub:fmtAH(ebt.total,ebt.orig).txt+' vs Orç',subCls:fmtAH(ebt.total,ebt.orig).cls==='ah-pos'?'kpi-up':'kpi-dn'},
+    {label:'EBITDA Ajustado',value:fmtM(eb.total),sub:fmtAH(eb.total,eb.orig).txt+' vs Orç Original',subCls:fmtAH(eb.total,eb.orig).cls==='ah-pos'?'kpi-up':'kpi-dn'},
+  ]);
+  document.getElementById('kpi-base').style.gridTemplateColumns='repeat(6,1fr)';
+
+  buildThead('thead-base',lReal,lOrc,[
+    {label:`${lReal}/26 — Realizado`,sub:'R$',cls:'th-real'},{label:'',sub:'AV%',cls:'th-real'},
+    {label:`${lOrc}/26 — Orçado`,sub:'R$',cls:'th-orc'},{label:'',sub:'AV%',cls:'th-orc'},
+    {label:'Forecast Total 2026',sub:'R$',cls:'th-total'},{label:'',sub:'AV%',cls:'th-total'},
+    {label:'Orçado Original 2026',sub:'R$',cls:'th-orig'},{label:'',sub:'AV%',cls:'th-orig'},
+    {label:'AH%',sub:'Fcst/Orç',cls:'th-orig'},
+  ]);
+  // thead colgroup com larguras corretas
+  const thead=document.getElementById('thead-base');
+  const cg=thead.querySelector('colgroup');
+  if(cg)cg.innerHTML=`<col style="width:310px">${'<col style="width:90px"><col style="width:58px">'.repeat(4)}<col style="width:72px">`;
+
+  const rlR=calc['Receita Líquida'].real||1,rlO=calc['Receita Líquida'].orc||1,rlT=calc['Receita Líquida'].total||1,rlG=calc['Receita Líquida'].orig||1;
+  document.getElementById('tbody-base').innerHTML=LINHAS.map(({l,c})=>{
+    const v=calc[l];const ah=fmtAH(v.total,v.orig);
+    return`<tr class="${c}"><td>${l}</td>
+      <td class="${neg(v.real)}">${fmtN(v.real)}</td><td class="av">${fmtAV(v.real,rlR)}</td>
+      <td class="${neg(v.orc)}">${fmtN(v.orc)}</td><td class="av">${fmtAV(v.orc,rlO)}</td>
+      <td class="${neg(v.total)}">${fmtN(v.total)}</td><td class="av">${fmtAV(v.total,rlT)}</td>
+      <td class="${neg(v.orig)}">${fmtN(v.orig)}</td><td class="av">${fmtAV(v.orig,rlG)}</td>
+      <td class="${ah.cls}">${ah.txt}</td></tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// ② FORECAST TENDÊNCIA
+// ══════════════════════════════════════════
+function renderTendencia(rows,mesesReal,mesesOrc,lReal,lOrc){
+  const calc={};
+  LINHAS.forEach(({l})=>{
+    const realP=somaReal(rows,l,mesesReal);
+    const orcP =somaOrc(rows,l,mesesReal);
+    const orcF =somaOrc(rows,l,mesesOrc);
+    const fator=(orcP!==0)?realP/orcP:1;
+    const fcstF=orcF*fator;
+    const fcstTot=realP+fcstF;
+    const orcTot=orcP+orcF;
+    calc[l]={realP,orcP,orcF,fcstF,fcstTot,orcTot,fator};
+  });
+
+  // TOTALIZADORES por soma de componentes (não fator direto da linha-mãe)
+  // Garante que a soma das filhas = totalizador em todas as colunas
+  function _somaComp(comps){
+    let realP=0,orcP=0,orcF=0;
+    comps.forEach(c=>{realP+=calc[c].realP;orcP+=calc[c].orcP;orcF+=calc[c].orcF;});
+    return {realP,orcP,orcF,fcstF:0,fcstTot:0,orcTot:orcP+orcF};
+  }
+  function _setTot(nome,comps){
+    const t=_somaComp(comps);
+    // forecast = soma dos forecasts das filhas
+    let fcstF=0; comps.forEach(c=>{fcstF+=calc[c].fcstF;});
+    t.fcstF=fcstF; t.fcstTot=t.realP+fcstF;
+    calc[nome]=t;
+  }
+  _setTot('Receita Bruta',['Receita com Revenda de Mercadorias','Receita com Serviços','Ajuste Intercompany']);
+  _setTot('Receita Líquida',['Receita Bruta','Impostos S/ Vendas']);
+  _setTot('CMV & CSP',['Custo das Mercadorias Vendidas','Ajuste Custo Intercompany','Custo dos Serviços Prestados']);
+  _setTot('Lucro Bruto',['Receita Líquida','CMV & CSP']);
+  _setTot('Lucro Bruto Ajustado',['Lucro Bruto','Verbas Comerciais']);
+  _setTot('SG&A',['Comissões sobre Vendas','Gastos com Pessoal Comercial','Gastos com Pessoal - SG&A',
+    'Despesas Comerciais','Despesas com Distribuição','Despesas Administrativas','Despesas Tributárias','Aluguel']);
+  _setTot('EBITDA',['Lucro Bruto Ajustado','SG&A','Outras Receitas/Despesas Operacionais']);
+  _setTot('EBITDA Ajustado',['EBITDA','Resultados Não Recorentes']);
+  const rb=calc['Receita Bruta'],rl=calc['Receita Líquida'],mb=calc['Lucro Bruto Ajustado'],sg=calc['SG&A'],ebt=calc['EBITDA'],eb=calc['EBITDA Ajustado'];
+  buildKpis('kpi-tend',[
+    {label:'Receita Bruta — Tend.',value:fmtM(rb.fcstTot),sub:fmtAH(rb.fcstTot,rb.orcTot).txt+' vs Orç',subCls:fmtAH(rb.fcstTot,rb.orcTot).cls==='ah-pos'?'kpi-up':'kpi-dn',extra:' kpi-tend'},
+    {label:'Receita Líquida — Tend.',value:fmtM(rl.fcstTot),sub:`AV% ${fmtAV(rl.fcstTot,rb.fcstTot)} da RB`,extra:' kpi-tend'},
+    {label:'Margem Bruta Ajustada',value:fmtM(mb.fcstTot),sub:`${fmtAV(mb.fcstTot,rl.fcstTot)} da RL`,subCls:mb.fcstTot>=0?'kpi-up':'kpi-dn',extra:' kpi-tend'},
+    {label:'SG&A — Tend.',value:fmtM(sg.fcstTot),sub:fmtAH(sg.fcstTot,sg.orcTot).txt+' vs Orç',subCls:fmtAH(sg.fcstTot,sg.orcTot).cls==='ah-pos'?'kpi-dn':'kpi-up',extra:' kpi-tend'},
+    {label:'EBITDA — Tend.',value:fmtM(ebt.fcstTot),sub:fmtAH(ebt.fcstTot,ebt.orcTot).txt+' vs Orç',subCls:fmtAH(ebt.fcstTot,ebt.orcTot).cls==='ah-pos'?'kpi-up':'kpi-dn',extra:' kpi-tend'},
+    {label:'EBITDA Ajustado — Tend.',value:fmtM(eb.fcstTot),sub:fmtAH(eb.fcstTot,eb.orcTot).txt+' vs Orç',subCls:fmtAH(eb.fcstTot,eb.orcTot).cls==='ah-pos'?'kpi-up':'kpi-dn',extra:' kpi-tend'},
+  ]);
+  document.getElementById('kpi-tend').style.gridTemplateColumns='repeat(6,1fr)';
+
+  buildThead('thead-tend',lReal,lOrc,[
+    {label:`Real ${lReal}/26`,sub:'R$',cls:'th-real'},
+    {label:'',sub:'AV%',cls:'th-real'},
+    {label:`Orç ${lReal}/26`,sub:'R$',cls:'th-orc'},
+    {label:'AH%',sub:'real/orç',cls:'th-orc'},
+    {label:`Orç ${lOrc}/26`,sub:'R$',cls:'th-orc'},
+    {label:'',sub:'AV%',cls:'th-orc'},
+    {label:`Forecast ${lOrc}/26`,sub:'R$',cls:'th-total'},
+    {label:'',sub:'AV%',cls:'th-total'},
+    {label:'Forecast Total',sub:'R$',cls:'th-total'},
+    {label:'',sub:'AV%',cls:'th-total'},
+    {label:'Orç Total 2026',sub:'R$',cls:'th-orig'},
+    {label:'',sub:'AV%',cls:'th-orig'},
+    {label:'AH%',sub:'fcst/orç',cls:'th-orig'},
+  ]);
+  const thead=document.getElementById('thead-tend');
+  const cg=thead.querySelector('colgroup');
+  if(cg)cg.innerHTML=`<col style="width:220px"><col style="width:82px"><col style="width:52px"><col style="width:82px"><col style="width:52px"><col style="width:82px"><col style="width:52px"><col style="width:82px"><col style="width:52px"><col style="width:82px"><col style="width:52px"><col style="width:82px"><col style="width:52px"><col style="width:60px">`;
+
+  document.getElementById('tbody-tend').innerHTML=LINHAS.map(({l,c})=>{
+    const v=calc[l];
+    const rl=calc['Receita Líquida'];
+    const rlR=rl.realP||1, rlO=rl.orcP||1, rlF=rl.orcF||1, rlT=rl.fcstTot||1, rlG=rl.orcTot||1;
+    const ah1=fmtAH(v.realP,v.orcP),ah2=fmtAH(v.fcstTot,v.orcTot);
+    return`<tr class="${c}"><td>${l}</td>
+      <td class="${neg(v.realP)}">${fmtN(v.realP)}</td><td class="av">${fmtAV(v.realP,rlR)}</td>
+      <td class="${neg(v.orcP)}">${fmtN(v.orcP)}</td>
+      <td class="${ah1.cls}">${ah1.txt}</td>
+      <td class="${neg(v.orcF)}">${fmtN(v.orcF)}</td><td class="av">${fmtAV(v.orcF,rlF)}</td>
+      <td class="${neg(v.fcstF)}">${fmtN(v.fcstF)}</td><td class="av">${fmtAV(v.fcstF,rl.fcstF||1)}</td>
+      <td class="${neg(v.fcstTot)}">${fmtN(v.fcstTot)}</td><td class="av">${fmtAV(v.fcstTot,rlT)}</td>
+      <td class="${neg(v.orcTot)}">${fmtN(v.orcTot)}</td><td class="av">${fmtAV(v.orcTot,rlG)}</td>
+      <td class="${ah2.cls}">${ah2.txt}</td></tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// ③ SIMULADOR — Indexador de Faturamento
+// ══════════════════════════════════════════
+// Linhas de faturamento (recebem o indexador)
+const LINHAS_FAT=['Receita com Revenda de Mercadorias','Receita com Serviços','Ajuste Intercompany'];
+// Despesas FIXAS — mantêm valor da tendência, não variam com faturamento
+const LINHAS_FIXAS=new Set(['Gastos com Pessoal - SG&A','Gastos com Pessoal Comercial','Aluguel']);
+// Totalizadores calculados por soma
+const SIM_TOT=new Set(['Receita Bruta','Receita Líquida','CMV & CSP','Lucro Bruto','Lucro Bruto Ajustado','SG&A','EBITDA','EBITDA Ajustado']);
+
+let _SC=null;
+
+// Base tendência por linha (fcstTot, realP, orcTot) + AV% sobre RL realizada
+function _baseTendencia(rows,mesesReal,mesesOrc){
+  const base={};
+  LINHAS.forEach(({l})=>{
+    const realP=somaReal(rows,l,mesesReal);
+    const orcP =somaOrc(rows,l,mesesReal);
+    const orcF =somaOrc(rows,l,mesesOrc);
+    const fator=(orcP!==0)?realP/orcP:1;
+    const fcstF=orcF*fator;
+    base[l]={realP,orcP,orcF,fcstF,fcstTot:realP+fcstF,orcTot:orcP+orcF};
+  });
+  // EBITDA e EBITDA Aj por componentes (consistente com Tendência)
+  const cmp=(comps)=>{
+    let f=0,r=0,o=0,oF=0;
+    comps.forEach(c=>{f+=base[c].fcstF;r+=base[c].realP;o+=base[c].orcTot;oF+=base[c].orcF;});
+    return {f,r,o,oF};
+  };
+  // recompõe RB, RL, CMV, LB, LBA, SGA, EBITDA por soma para garantir consistência
+  return base;
+}
+
+// Calcula o simulador a partir do indexador de faturamento
+function _calcSim(){
+  if(!_SC)return{};
+  const{rows,mesesReal,mesesOrc}=_SC;
+  const idx=parseFloat(document.getElementById('idxFat')?.value)||0; // % indexador (sobre Receita Bruta)
+  const base=_baseTendencia(rows,mesesReal,mesesOrc);
+  const v={};
+
+  // RL realizada (Jan-Mai) = denominador dos AV%
+  const rlRealReal = base['Receita Líquida'] ? base['Receita Líquida'].realP : 0;
+  // AV% de cada linha sobre a RL REALIZADA (Jan-Mai)
+  const avReal=(l)=> (rlRealReal!==0 && base[l])? (base[l].realP/rlRealReal) : 0;
+
+  // 1) Receita Bruta = orçado RB Jun-Dez × (1 + indexador)
+  const rbOrcF = base['Receita Bruta'] ? base['Receita Bruta'].orcF : 0;
+  const rbFcstF = rbOrcF*(1+idx/100);
+
+  // 2) Receita Líquida (BASE 100%) = RB ÷ AV%_realizado_da_RB
+  const avRB = avReal('Receita Bruta'); // ex 1,149
+  const rlBaseF = (avRB!==0)? (rbFcstF/avRB) : 0;
+
+  // Linhas projetadas por AV%_realizado × RL_base (exceto fixas)
+  const POR_AV=['Receita com Revenda de Mercadorias','Receita com Serviços','Ajuste Intercompany',
+    'Impostos S/ Vendas','Custo das Mercadorias Vendidas','Ajuste Custo Intercompany',
+    'Custo dos Serviços Prestados','Verbas Comerciais','Comissões sobre Vendas',
+    'Despesas Comerciais','Despesas com Distribuição','Despesas Administrativas',
+    'Despesas Tributárias','Outras Receitas/Despesas Operacionais'];
+  const FIXAS=['Gastos com Pessoal - SG&A','Gastos com Pessoal Comercial','Aluguel','Resultados Não Recorentes'];
+
+  const of_=l=>base[l]?base[l].orcF:0;
+  const oP_=l=>base[l]?base[l].orcP:0;
+  const ot_=l=>base[l]?base[l].orcTot:0;
+  const rp_=l=>base[l]?base[l].realP:0;
+
+  // Linhas por AV% (incluindo componentes de receita): fcstF = RL_base × AV%_realizado
+  POR_AV.forEach(l=>{
+    const b=base[l];
+    const fcstF=rlBaseF*avReal(l);
+    v[l]={realP:b.realP,orcP:b.orcP,orcF:b.orcF,fcstF,fcstTot:b.realP+fcstF,orcTot:b.orcTot};
+  });
+
+  // Fixas: orçado Jun-Dez
+  FIXAS.forEach(l=>{
+    const b=base[l];
+    v[l]={realP:b.realP,orcP:b.orcP,orcF:b.orcF,fcstF:b.orcF,fcstTot:b.realP+b.orcF,orcTot:b.orcTot};
+  });
+
+  // Totalizadores por soma
+  const ff2=l=>v[l]?v[l].fcstF:0;
+  const rP2=l=>v[l]?v[l].realP:0;
+  const ot2=l=>v[l]?v[l].orcTot:0;
+  function _tot(nome,comps){
+    let fF=0,rr=0,oF=0,oP=0,oT=0;
+    comps.forEach(c=>{fF+=ff2(c);rr+=rP2(c);oF+=of_(c);oP+=oP_(c);oT+=ot2(c);});
+    v[nome]={realP:rr,orcP:oP,orcF:oF,fcstF:fF,fcstTot:rr+fF,orcTot:oT};
+  }
+  _tot('Receita Bruta',['Receita com Revenda de Mercadorias','Receita com Serviços','Ajuste Intercompany']);
+  _tot('Receita Líquida',['Receita Bruta','Impostos S/ Vendas']);
+  _tot('CMV & CSP',['Custo das Mercadorias Vendidas','Ajuste Custo Intercompany','Custo dos Serviços Prestados']);
+  _tot('Lucro Bruto',['Receita Líquida','CMV & CSP']);
+  _tot('Lucro Bruto Ajustado',['Lucro Bruto','Verbas Comerciais']);
+  _tot('SG&A',['Comissões sobre Vendas','Gastos com Pessoal Comercial','Gastos com Pessoal - SG&A',
+    'Despesas Comerciais','Despesas com Distribuição','Despesas Administrativas','Despesas Tributárias','Aluguel']);
+  _tot('EBITDA',['Lucro Bruto Ajustado','SG&A','Outras Receitas/Despesas Operacionais']);
+  _tot('EBITDA Ajustado',['EBITDA','Resultados Não Recorentes']);
+
+  return v;
+}
+
+function renderSim(rows,mesesReal,mesesOrc,lReal,lOrc){
+  _SC={rows,mesesReal,mesesOrc};
+  buildThead('thead-sim',lReal,lOrc,[
+    {label:`Real ${lReal}/26`,sub:'R$',cls:'th-real'},
+    {label:'',sub:'AV%',cls:'th-real'},
+    {label:`Orç ${lOrc}/26`,sub:'R$',cls:'th-orc'},
+    {label:'',sub:'AV%',cls:'th-orc'},
+    {label:`Forecast ${lOrc}/26`,sub:'R$',cls:'th-total'},
+    {label:'',sub:'AV%',cls:'th-total'},
+    {label:'Forecast Total',sub:'R$',cls:'th-total'},
+    {label:'',sub:'AV%',cls:'th-total'},
+    {label:'Orç Total 2026',sub:'R$',cls:'th-orig'},
+    {label:'',sub:'AV%',cls:'th-orig'},
+    {label:'AH%',sub:'fcst/orç',cls:'th-orig'},
+  ]);
+  const thead=document.getElementById('thead-sim');
+  const cg=thead.querySelector('colgroup');
+  if(cg)cg.innerHTML=`<col style="width:240px"><col style="width:90px"><col style="width:52px"><col style="width:90px"><col style="width:52px"><col style="width:90px"><col style="width:52px"><col style="width:90px"><col style="width:52px"><col style="width:90px"><col style="width:52px"><col style="width:60px">`;
+  document.getElementById('tbody-sim').innerHTML=LINHAS.map(({l,c})=>`<tr class="${c}"><td>${l}</td>
+    <td id="s_${cssid(l)}_rP"></td><td class="av" id="s_${cssid(l)}_avR"></td>
+    <td id="s_${cssid(l)}_oF"></td><td class="av" id="s_${cssid(l)}_avO"></td>
+    <td id="s_${cssid(l)}_fF"></td><td class="av" id="s_${cssid(l)}_avF"></td>
+    <td id="s_${cssid(l)}_fT"></td><td class="av" id="s_${cssid(l)}_avT"></td>
+    <td id="s_${cssid(l)}_oT"></td><td class="av" id="s_${cssid(l)}_avG"></td>
+    <td id="s_${cssid(l)}_ah"></td></tr>`).join('');
+  recalcSim();
+}
+
+function cssid(l){return l.replace(/[^a-zA-Z0-9]/g,'_');}
+
+function recalcSim(){
+  const cv=_calcSim();
+  const rl=cv['Receita Líquida']||{};
+  const rlR=rl.realP||1, rlF=rl.orcF||1, rlFcstF=rl.fcstF||1, rlT=rl.fcstTot||1, rlG=rl.orcTot||1;
+  LINHAS.forEach(({l})=>{
+    const dat=cv[l];if(!dat)return;
+    const id='s_'+cssid(l);
+    const set=(suf,val,isNeg)=>{const e=document.getElementById(id+suf);if(e){e.textContent=val;if(isNeg!==undefined)e.className=isNeg?'neg':'';}};
+    set('_rP',fmtN(dat.realP),dat.realP<0);
+    set('_avR',fmtAV(dat.realP,rlR));
+    set('_oF',fmtN(dat.orcF),dat.orcF<0);
+    set('_avO',fmtAV(dat.orcF,rlF));
+    set('_fF',fmtN(dat.fcstF),dat.fcstF<0);
+    set('_avF',fmtAV(dat.fcstF,rlFcstF));
+    set('_fT',fmtN(dat.fcstTot),dat.fcstTot<0);
+    set('_avT',fmtAV(dat.fcstTot,rlT));
+    set('_oT',fmtN(dat.orcTot),dat.orcTot<0);
+    set('_avG',fmtAV(dat.orcTot,rlG));
+    const ah=fmtAH(dat.fcstTot,dat.orcTot);
+    const eAH=document.getElementById(id+'_ah');
+    if(eAH){eAH.textContent=ah.txt;eAH.className=ah.cls;}
+  });
+  _recalcKpiSim();
+  renderSensibilidade();
+}
+
+function resetSim(){
+  const idx=document.getElementById('idxFat');
+  if(idx)idx.value='0';
+  recalcSim();
+}
+
+function _simVal(l){
+  const cv=_calcSim();
+  return cv[l]||{fcstTot:0,orcTot:0,fcstF:0};
+}
+
+function _recalcKpiSim(){
+  const rb=_simVal('Receita Bruta'),rl=_simVal('Receita Líquida'),mb=_simVal('Lucro Bruto Ajustado');
+  const sg=_simVal('SG&A'),ebt=_simVal('EBITDA'),eb=_simVal('EBITDA Ajustado');
+  buildKpis('kpi-sim',[
+    {label:'Receita Bruta — Sim.',value:fmtM(rb.fcstTot),sub:fmtAH(rb.fcstTot,rb.orcTot).txt+' vs Orç',subCls:fmtAH(rb.fcstTot,rb.orcTot).cls==='ah-pos'?'kpi-up':'kpi-dn',extra:' kpi-sim'},
+    {label:'Receita Líquida — Sim.',value:fmtM(rl.fcstTot),sub:`AV% ${fmtAV(rl.fcstTot,rb.fcstTot)} da RB`,extra:' kpi-sim'},
+    {label:'Margem Bruta Ajustada',value:fmtM(mb.fcstTot),sub:`${fmtAV(mb.fcstTot,rl.fcstTot)} da RL`,subCls:mb.fcstTot>=0?'kpi-up':'kpi-dn',extra:' kpi-sim'},
+    {label:'SG&A — Sim.',value:fmtM(sg.fcstTot),sub:fmtAH(sg.fcstTot,sg.orcTot).txt+' vs Orç',subCls:fmtAH(sg.fcstTot,sg.orcTot).cls==='ah-pos'?'kpi-dn':'kpi-up',extra:' kpi-sim'},
+    {label:'EBITDA — Sim.',value:fmtM(ebt.fcstTot),sub:fmtAH(ebt.fcstTot,ebt.orcTot).txt+' vs Orç',subCls:fmtAH(ebt.fcstTot,ebt.orcTot).cls==='ah-pos'?'kpi-up':'kpi-dn',extra:' kpi-sim'},
+    {label:'EBITDA Ajustado — Sim.',value:fmtM(eb.fcstTot),sub:fmtAH(eb.fcstTot,eb.orcTot).txt+' vs Orç',subCls:fmtAH(eb.fcstTot,eb.orcTot).cls==='ah-pos'?'kpi-up':'kpi-dn',extra:' kpi-sim'},
+  ]);
+}
+
+// ══════════════════════════════════════════
+// ④ SENSIBILIDADE — EBITDA (Faturamento × Margem Bruta)
+// ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// ④⑤ SIMULAÇÃO DE CENÁRIO + MATRIZ — base no simulador
+// ══════════════════════════════════════════
+// Extrai os parâmetros base do estado ATUAL do simulador
+// Separa REALIZADO (Jan-Mai, fixo) de PROJETADO (Jun-Dez, sensível às alavancas)
+function _baseCenario(){
+  const cv=_calcSim();
+  const get=(l,campo)=>cv[l]?cv[l][campo]:0;
+
+  // REALIZADO Jan-Mai (fato consumado, não muda)
+  const rlReal  = get('Receita Líquida','realP');
+  const lbaReal = get('Lucro Bruto Ajustado','realP');
+  const sgaReal = get('SG&A','realP');
+  const outReal = get('Outras Receitas/Despesas Operacionais','realP');
+  const resReal = get('Resultados Não Recorentes','realP');
+
+  // PROJETADO Jun-Dez (forecast — onde as alavancas atuam)
+  const rlProj  = get('Receita Líquida','fcstF');
+  const lbaProj = get('Lucro Bruto Ajustado','fcstF');
+  const sgaProj = get('SG&A','fcstF');
+  const outProj = get('Outras Receitas/Despesas Operacionais','fcstF');
+  const resProj = get('Resultados Não Recorentes','fcstF');
+
+  // Parte FIXA do SG&A no projetado (pessoal + aluguel — não varia com faturamento)
+  const fixProj = ['Gastos com Pessoal - SG&A','Gastos com Pessoal Comercial','Aluguel']
+    .reduce((s,l)=>s+(cv[l]?cv[l].fcstF:0),0);
+
+  // Totais (real + proj) para exibição
+  const rl=rlReal+rlProj, lba=lbaReal+lbaProj, sga=sgaReal+sgaProj;
+  const out=outReal+outProj, res=resReal+resProj;
+  const ebt = get('EBITDA Ajustado','fcstTot');
+
+  // % sobre a RL PROJETADA (base das alavancas de margem e sga)
+  const mbProjPct  = rlProj!==0?(lbaProj/rlProj*100):0;
+  const sgaProjPct = rlProj!==0?(sgaProj/rlProj*100):0;
+
+  // % sobre a RL TOTAL (para exibição nos campos/cabeçalhos)
+  const mbPct  = rl!==0?(lba/rl*100):0;
+  const sgaPct = rl!==0?(sga/rl*100):0;
+
+  return {
+    rl,lba,sga,out,res,ebt,mbPct,sgaPct,
+    rlReal,lbaReal,sgaReal,outReal,resReal,
+    rlProj,lbaProj,sgaProj,outProj,resProj,fixProj,
+    mbProjPct,sgaProjPct
+  };
+}
+
+// EBITDA Ajustado de um cenário.
+// fatPct, mbPct, sgaPct atuam SOMENTE sobre a parcela PROJETADA (Jun-Dez).
+// O realizado Jan-Mai é fixo (fato consumado).
+function _ebitdaCenario(b, fatPct, mbPctProj, sgaPctProj){
+  // RL projetada ajustada pelo faturamento
+  const rlProj = b.rlProj*(1+fatPct/100);
+  // Lucro Bruto Ajustado projetado = RL projetada × margem (a margem é a do projetado)
+  const lbaProj = rlProj*(mbPctProj/100);
+  // SG&A projetado = parte fixa (constante) + parte variável (acompanha receita projetada)
+  const fixPctProjBase = b.rlProj!==0? (b.fixProj/b.rlProj*100):0;
+  const varPct = sgaPctProj - fixPctProjBase;
+  const sgaProj = b.fixProj + rlProj*(varPct/100);
+  // Outras e Resultados projetados são fixos
+  // EBITDA Ajustado = (realizado Jan-Mai fixo) + (projetado Jun-Dez ajustado)
+  const ebtReal = b.lbaReal + b.sgaReal + b.outReal + b.resReal;
+  const ebtProj = lbaProj + sgaProj + b.outProj + b.resProj;
+  return ebtReal + ebtProj;
+}
+
+let _cenBase=null;
+
+function renderSensibilidade(){
+  if(!_SC)return;
+  const b=_baseCenario();
+  _cenBase=b;
+
+  // Pré-preenche margem e sga se vazios
+  const mbInp=document.getElementById('cMb');
+  const sgaInp=document.getElementById('cSga');
+  if(mbInp && mbInp.value==='') mbInp.value=b.mbProjPct.toFixed(1);
+  if(sgaInp && sgaInp.value==='') sgaInp.value=b.sgaProjPct.toFixed(1);
+
+  const fat=parseFloat(document.getElementById('cFat').value)||0;
+  const mb =mbInp.value!==''?parseFloat(mbInp.value):b.mbProjPct;
+  const sga=sgaInp.value!==''?parseFloat(sgaInp.value):b.sgaProjPct;
+
+  const rlProjCen=b.rlProj*(1+fat/100);
+  const rlCen=b.rlReal+rlProjCen;                    // RL total = real + proj ajustado
+  const lbaProjCen=rlProjCen*(mb/100);
+  const lbaCen=b.lbaReal+lbaProjCen;                 // LBA total = real + proj ajustado
+  // Se os 3 campos estão na base, usa EBITDA exato do simulador
+  const naBase=(Math.abs(fat)<0.001 && Math.abs(mb-b.mbProjPct)<0.05 && Math.abs(sga-b.sgaProjPct)<0.05);
+  const ebtCen=naBase?b.ebt:_ebitdaCenario(b,fat,mb,sga);
+  const delta=ebtCen-b.ebt;
+
+  buildKpis('kpi-cenario',[
+    {label:'Receita Líquida',value:fmtM(rlCen),sub:`Jun-Dez ${(fat>=0?'+':'')+fat.toFixed(1).replace('.',',')}%`,subCls:fat>=0?'kpi-up':'kpi-dn'},
+    {label:'Lucro Bruto Ajustado',value:fmtM(lbaCen),sub:`Margem Jun-Dez ${mb.toFixed(1).replace('.',',')}%`},
+    {label:'EBITDA Ajustado do Cenário',value:fmtM(ebtCen),sub:`SG&A Jun-Dez ${sga.toFixed(1).replace('.',',')}%`,subCls:ebtCen>=0?'kpi-up':'kpi-dn'},
+    {label:'Δ vs Simulador',value:(delta>=0?'+':'')+fmtM(delta),sub:b.ebt!==0?`${(delta/Math.abs(b.ebt)*100).toFixed(1).replace('.',',')}%`:'-',subCls:delta>=0?'kpi-up':'kpi-dn'},
+  ]);
+  renderMatriz();
+}
+
+function resetCenario(){
+  const b=_baseCenario();
+  document.getElementById('cFat').value='0';
+  document.getElementById('cMb').value=b.mbProjPct.toFixed(1);
+  document.getElementById('cSga').value=b.sgaProjPct.toFixed(1);
+  renderSensibilidade();
+}
+
+function renderMatriz(){
+  if(!_cenBase)return;
+  const b=_cenBase;
+  const fatStep=parseFloat(document.getElementById('mxFatStep').value)||5;
+  const colStep=parseFloat(document.getElementById('mxColStep').value)||1;
+
+  // Nível de SG&A: pré-preenche com o atual do simulador
+  const sgaInp=document.getElementById('mxSga');
+  if(sgaInp && sgaInp.value==='') sgaInp.value=b.sgaProjPct.toFixed(1);
+  const sgaNivel = sgaInp.value!==''?parseFloat(sgaInp.value):b.sgaProjPct;
+  // Atualiza o indicador de nível atual
+  const lbl=document.getElementById('mxSgaAtual');
+  if(lbl)lbl.textContent='SG&A '+sgaNivel.toFixed(1).replace('.',',')+'%';
+
+  const fatRange=[-4,-3,-2,-1,0,1,2,3,4].map(i=>i*fatStep);
+  const mbRange =[-4,-3,-2,-1,0,1,2,3,4].map(i=>b.mbProjPct+i*colStep);
+
+  const thead=document.getElementById('thead-sens');
+  thead.innerHTML=
+    `<tr><th rowspan="2" style="background:var(--v1)">Faturamento ↓ / Margem →<br><span style="font-size:10px;font-weight:400">(SG&A ${sgaNivel.toFixed(1).replace('.',',')}%)</span></th>`+
+    `<th colspan="${mbRange.length}" style="background:var(--col-total,#206A47)">Margem Bruta Jun-Dez (% da RL projetada)</th></tr>`+
+    `<tr>`+mbRange.map(c=>`<th>${c.toFixed(1).replace('.',',')}%</th>`).join('')+`</tr>`;
+
+  const tbody=document.getElementById('tbody-sens');
+  // EBITDA Ajustado exato do simulador (para a célula base não divergir por arredondamento)
+  const ebtExato=b.ebt;
+  const sgaExatoBase=(Math.abs(sgaNivel-b.sgaProjPct)<0.05); // nível selecionado ≈ SG&A atual
+  tbody.innerHTML=fatRange.map(fat=>{
+    const rlCen=b.rlReal + b.rlProj*(1+fat/100);   // RL total = realizado + projetado ajustado
+    const cells=mbRange.map((mb,ci)=>{
+      const isColBase=(ci===4); // coluna central de 9 = margem base
+      const isBase=(Math.abs(fat)<0.001 && isColBase && sgaExatoBase);
+      // Na célula base, usa o EBITDA exato do simulador; nas demais, calcula
+      const e = isBase ? ebtExato : _ebitdaCenario(b,fat,mb,sgaNivel);
+      const cls=isBase?'sens-base':(e>=0?'sens-pos':'sens-neg');
+      return `<td class="${cls}">${fmtN(Math.round(e))}</td>`;
+    }).join('');
+    const lblFat=`${(fat>=0?'+':'')+fat.toFixed(1).replace('.',',')}%`;
+    const lblRL=`RL ${(rlCen/1e6).toFixed(1).replace('.',',')}M`;
+    return `<tr><td class="sens-row-hdr">${lblFat}<br><span style="font-size:10px;font-weight:400;opacity:.85">${lblRL}</span></td>${cells}</tr>`;
+  }).join('');
+
+  // ── Esforço SG&A ──
+  // Teto = 5.715.000 (realizado de maio, teto mensal de despesa, fixo)
+  // SG&A projetado = sgaNivel% × RL projetada Jun-Dez (valor total dos meses orçados, negativo no banco → usar abs)
+  // Esforço mensal = Teto − (|SG&A projetado| ÷ qtd meses)
+  // Esforço total = Esforço mensal × qtd meses
+  const TETO_SGA=5715000;
+  const qMeses=(_SC && _SC.mesesOrc)?_SC.mesesOrc.length:7;
+  const sgaProjVal=Math.abs(b.rlProj*(sgaNivel/100)); // SG&A projetado em R$ (total Jun-Dez)
+  const esforcoMes=TETO_SGA-(sgaProjVal/qMeses);
+  const esforcoTot=esforcoMes*qMeses;
+  const elE=document.getElementById('esforco-sga');
+  if(elE){
+    const sinal=esforcoTot>=0?'':'-';
+    const cor=esforcoTot>=0?'var(--v1)':'var(--red)';
+    elE.innerHTML=`Esforço SG&A: <span style="color:${cor}">${fmtN(Math.round(esforcoTot))}</span> `+
+      `<span style="font-weight:400;color:var(--muted);font-size:11px">`+
+      `(teto ${fmtN(TETO_SGA)}/mês − SG&A projetado ${fmtN(Math.round(sgaProjVal/qMeses))}/mês = ${fmtN(Math.round(esforcoMes))}/mês × ${qMeses} meses)</span>`;
+  }
+}
+
+// Navega o nível de SG&A pelo passo definido
+function mxSgaNav(dir){
+  const sgaInp=document.getElementById('mxSga');
+  const step=parseFloat(document.getElementById('mxSgaStep').value)||1;
+  const atual=sgaInp.value!==''?parseFloat(sgaInp.value):(_cenBase?_cenBase.sgaProjPct:0);
+  sgaInp.value=(atual+dir*step).toFixed(1);
+  renderMatriz();
+}
+
+// ══════════════════════════════════════════
+// RENDER TUDO
+// ══════════════════════════════════════════
+function renderTudo(){
+  try{
+  const rows=filtrar(DADOS);
+  const mesesReal=[...new Set(
+    DADOS.filter(r=>r.mes_ano.startsWith('2026')&&r.linha_dre==='Receita Bruta'&&r.realizado!==0)
+      .map(r=>r.mes_ano.slice(5,7))
+  )].sort();
+  const mesesOrc=MESES_ANO.filter(m=>!mesesReal.includes(m));
+  const nR=mesesReal.length,nO=mesesOrc.length;
+  const lReal=nR>0?`${NOM[parseInt(mesesReal[0])-1]}–${NOM[parseInt(mesesReal[nR-1])-1]}`:'Real';
+  const lOrc =nO>0?`${NOM[parseInt(mesesOrc[0])-1]}–${NOM[parseInt(mesesOrc[nO-1])-1]}`:'Orç';
+  const vis=document.getElementById('fVisao').value;
+  const visLbl=vis==='consolidado'?'Consolidado':vis==='regiao'?document.getElementById('fRegiao').value:document.getElementById('fLoja').value;
+  document.getElementById('page-sub').textContent=`TerraZoo · ${visLbl} · ${nR} meses realizados · ${nO} meses orçados`;
+  document.getElementById('badge-periodo').textContent=`2026 · ${nR} real + ${nO} orç`;
+  renderBase(rows,mesesReal,mesesOrc,lReal,lOrc);
+  renderTendencia(rows,mesesReal,mesesOrc,lReal,lOrc);
+  renderSim(rows,mesesReal,mesesOrc,lReal,lOrc);
+  }catch(e){
+    document.getElementById('loading').style.display='none';
+    document.getElementById('error-box').style.display='block';
+    document.getElementById('error-msg').textContent='Erro renderTudo: '+e.message+' | '+e.stack;
+  }
+}
+
+function onVisaoChange(){
+  const v=document.getElementById('fVisao').value;
+  document.getElementById('grpRegiao').style.display=v==='regiao'?'flex':'none';
+  document.getElementById('grpLoja').style.display=v==='loja'?'flex':'none';
+  renderTudo();
+}
+
+// ══════════════════════════════════════════
+// EXPORTAR EXCEL (SpreadsheetML)
+// ══════════════════════════════════════════
+function exportarExcel(){
+  const C={v1:'1a2e1f',sub:'2E7D32',hi:'b2dfc4',grp:'E8F5E9',real:'1a2e1f',orc:'2E7D32',total:'388E3C',orig:'558B2F',white:'FFFFFF',red:'9C0006',muted:'555555',txt:'111111'};
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const styleMap={};const styleArr=[];
+  function sid(bg,fg,bold,halign,fmt){
+    const k=`${bg}|${fg}|${bold}|${halign}|${fmt||''}`;
+    if(styleMap[k])return styleMap[k];
+    const id=60+styleArr.length;
+    styleArr.push({id,bg,fg,bold,halign,fmt:fmt||''});
+    styleMap[k]=id;return id;
+  }
+  function rowStyle(cls){
+    if(cls.includes('row-total'))   return{bg:C.v1,fg:C.white,bold:true};
+    if(cls.includes('row-subtotal'))return{bg:C.sub,fg:C.white,bold:true};
+    if(cls.includes('row-highlight'))return{bg:C.hi,fg:C.v1,bold:true};
+    if(cls.includes('row-group'))   return{bg:C.grp,fg:C.muted,bold:false};
+    return{bg:C.white,fg:C.txt,bold:false};
+  }
+  function thBg(cls){
+    if(cls.includes('th-real')) return C.real;
+    if(cls.includes('th-orc'))  return C.orc;
+    if(cls.includes('th-total'))return C.total;
+    if(cls.includes('th-orig')) return C.orig;
+    return C.v1;
+  }
+
+  function buildSheet(label,theadId,tbodyId){
+    const gr1=[...document.querySelectorAll(`#${theadId} tr.gr1 th`)].slice(1); // pula "Linha DRE" (rowspan)
+    const gr2=[...document.querySelectorAll(`#${theadId} tr.gr2 th`)];
+    const trs=[...document.querySelectorAll(`#${tbodyId} tr`)];
+    // total de colunas = 1 (Linha DRE) + qtd de células gr2
+    const totalCols=1+gr2.length;
+    let xml='';
+    // Linha de TÍTULO — mesclada em toda a largura (alinha com as colunas de baixo)
+    xml+=`<Row ss:Height="22"><Cell ss:StyleID="${sid(C.v1,C.white,true,'Left')}" ss:MergeAcross="${totalCols-1}"><Data ss:Type="String">${esc(label)}</Data></Cell></Row>`;
+    // gr1 (grupos de colunas)
+    xml+=`<Row ss:Height="20"><Cell ss:StyleID="${sid(C.v1,C.white,true,'Left')}"><Data ss:Type="String"></Data></Cell>`;
+    gr1.forEach(th=>{
+      const bg=thBg(th.className);const span=parseInt(th.getAttribute('colspan')||1);
+      xml+=`<Cell ss:StyleID="${sid(bg,C.white,true,'Center')}" ss:MergeAcross="${span-1}"><Data ss:Type="String">${esc(th.textContent.trim())}</Data></Cell>`;
+    });
+    xml+='</Row>';
+    // gr2
+    xml+=`<Row ss:Height="16"><Cell ss:StyleID="${sid(C.v1,C.white,true,'Left')}"><Data ss:Type="String">Linha DRE</Data></Cell>`;
+    gr2.forEach(th=>{
+      const bg=thBg(th.className);
+      xml+=`<Cell ss:StyleID="${sid(bg,C.white,true,'Right')}"><Data ss:Type="String">${esc(th.textContent.trim())}</Data></Cell>`;
+    });
+    xml+='</Row>';
+    // dados
+    trs.forEach(tr=>{
+      const{bg,fg,bold}=rowStyle(tr.className||'');
+      xml+=`<Row ss:Height="15">`;
+      [...tr.querySelectorAll('td')].forEach((td,i)=>{
+        const halign=i===0?'Left':'Right';
+        const inp=td.querySelector('input');
+        const raw=inp?inp.value+'%':td.textContent.trim();
+        const isPct=raw.includes('%');
+        if(i===0){
+          xml+=`<Cell ss:StyleID="${sid(bg,fg,bold,'Left')}"><Data ss:Type="String">${esc(raw)}</Data></Cell>`;
+        } else if(isPct){
+          // % → número puro dividido por 100, formato 0,0% no Excel
+          const pctVal=parseFloat(raw.replace('%','').replace(',','.').trim());
+          if(!isNaN(pctVal)){
+            xml+=`<Cell ss:StyleID="${sid(bg,fg,bold,'Right','pct')}"><Data ss:Type="Number">${(pctVal/100).toFixed(10)}</Data></Cell>`;
+          } else {
+            xml+=`<Cell ss:StyleID="${sid(bg,fg,bold,'Right')}"><Data ss:Type="String">${esc(raw)}</Data></Cell>`;
+          }
+        } else {
+          // R$ → número inteiro
+          const clean=raw.replace(/\./g,'').replace(',','.').replace(/[^0-9\.\-]/g,'');
+          const n=parseFloat(clean);
+          if(!isNaN(n)){
+            xml+=`<Cell ss:StyleID="${sid(bg,fg,bold,'Right')}"><Data ss:Type="Number">${n}</Data></Cell>`;
+          } else {
+            xml+=`<Cell ss:StyleID="${sid(bg,fg,bold,'Right')}"><Data ss:Type="String">${esc(raw)}</Data></Cell>`;
+          }
+        }
+      });
+      xml+='</Row>';
+    });
+    return xml;
+  }
+
+  // Sheet da matriz de sensibilidade
+  function buildSheetSens(){
+    const thRows=[...document.querySelectorAll('#thead-sens tr')];
+    const trs=[...document.querySelectorAll('#tbody-sens tr')];
+    if(!trs.length)return '';
+    // largura total = 1 + nº de colunas de margem (última linha do thead)
+    const ultThead=thRows[thRows.length-1];
+    const nCols=[...ultThead.querySelectorAll('th')].length; // colunas de margem
+    const totalCols=1+nCols;
+    let xml='';
+    // Título
+    xml+=`<Row ss:Height="22"><Cell ss:StyleID="${sid(C.v1,C.white,true,'Left')}" ss:MergeAcross="${totalCols-1}"><Data ss:Type="String">⑤ Matriz de Sensibilidade — EBITDA Ajustado</Data></Cell></Row>`;
+    // Cabeçalho margem (linha de %)
+    xml+=`<Row ss:Height="18"><Cell ss:StyleID="${sid(C.v1,C.white,true,'Left')}"><Data ss:Type="String">Faturamento / Margem</Data></Cell>`;
+    [...ultThead.querySelectorAll('th')].forEach(th=>{
+      xml+=`<Cell ss:StyleID="${sid(C.total,C.white,true,'Center')}"><Data ss:Type="String">${esc(th.textContent.trim())}</Data></Cell>`;
+    });
+    xml+='</Row>';
+    // Linhas de dados
+    trs.forEach(tr=>{
+      const tds=[...tr.querySelectorAll('td')];
+      xml+='<Row ss:Height="15">';
+      tds.forEach((td,i)=>{
+        if(i===0){
+          // rótulo faturamento (pode ter <br>) → texto limpo
+          const txt=td.textContent.replace(/\s+/g,' ').trim();
+          xml+=`<Cell ss:StyleID="${sid(C.sub,C.white,true,'Left')}"><Data ss:Type="String">${esc(txt)}</Data></Cell>`;
+        } else {
+          const raw=td.textContent.trim();
+          const clean=raw.replace(/\./g,'').replace(',','.').replace(/[^0-9\.\-]/g,'');
+          const n=parseFloat(clean);
+          const isNeg=raw.includes('-');
+          const bg=isNeg?'fff3f3':'e8f5e9';
+          if(!isNaN(n)){
+            xml+=`<Cell ss:StyleID="${sid(bg,isNeg?C.red:'1a2e1f',false,'Right')}"><Data ss:Type="Number">${n}</Data></Cell>`;
+          } else {
+            xml+=`<Cell ss:StyleID="${sid(bg,'1a2e1f',false,'Right')}"><Data ss:Type="String">${esc(raw)}</Data></Cell>`;
+          }
+        }
+      });
+      xml+='</Row>';
+    });
+    // Esforço SG&A
+    const elE=document.getElementById('esforco-sga');
+    if(elE){
+      const txt=elE.textContent.replace(/\s+/g,' ').trim();
+      xml+=`<Row ss:Height="20"><Cell ss:StyleID="${sid(C.v1,C.white,true,'Left')}" ss:MergeAcross="${totalCols-1}"><Data ss:Type="String">${esc(txt)}</Data></Cell></Row>`;
+    }
+    return xml;
+  }
+
+  const sheets=[
+    {name:'Forecast Base',     rows:buildSheet('① Forecast Base — Real + Orçado','thead-base','tbody-base')},
+    {name:'Forecast Tendência',rows:buildSheet('② Forecast Tendência','thead-tend','tbody-tend')},
+    {name:'Simulador',         rows:buildSheet('③ Simulador','thead-sim','tbody-sim')},
+    {name:'Sensibilidade',     rows:buildSheetSens()},
+  ];
+
+  let stylesXml=`<Style ss:ID="Default"><Alignment ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="11"/></Style>`;
+  styleArr.forEach(s=>{
+    const fmt=s.fmt==='pct'?'<NumberFormat ss:Format="0.0%"/>':'';
+    stylesXml+=`<Style ss:ID="${s.id}">
+      <Alignment ss:Horizontal="${s.halign}" ss:Vertical="Center"/>
+      <Interior ss:Color="#${s.bg}" ss:Pattern="Solid"/>
+      <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="${s.bold?1:0}" ss:Color="#${s.fg}"/>
+      ${fmt}
+    </Style>`;
+  });
+
+  const sheetsXml=sheets.map(s=>`
+    <Worksheet ss:Name="${esc(s.name)}">
+      <Table ss:DefaultColumnWidth="80" ss:DefaultRowHeight="15">
+        <Column ss:Width="220"/>
+        ${s.rows}
+      </Table>
+    </Worksheet>`).join('');
+
+  const xml=`<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:x="urn:schemas-microsoft-com:office:excel">
+  <Styles>${stylesXml}</Styles>${sheetsXml}
+</Workbook>`;
+
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([xml],{type:'application/vnd.ms-excel;charset=utf-8'}));
+  a.download=`TerraZoo_Forecast_2026_${new Date().toISOString().slice(0,10)}.xls`;
+  a.click();
+}
+
+// ── Init ──
+// ══ AUTENTICAÇÃO ══
+const API_POST='https://script.google.com/macros/s/AKfycbwbqZDvHDwuwWJkyyjgK3YJAi7JEBqLHAlbuJHh32V50FyFSTneJEmmRWrpW49Rw5by/exec';
+let _cred={email:'',senha:''};
+
+async function fazerLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const senha=document.getElementById('loginSenha').value.trim();
+  const erro=document.getElementById('login-erro');
+  const btn=document.querySelector('.login-btn');
+  if(!email||!senha){erro.textContent='Preencha e-mail e senha.';return;}
+  erro.textContent='';btn.disabled=true;btn.textContent='Entrando...';
+  try{
+    const resp=await fetch(API_POST,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({acao:'login',email,senha})
+    });
+    const data=await resp.json();
+    if(data.status!=='ok'){erro.textContent=data.message||'Falha no login.';btn.disabled=false;btn.textContent='Entrar';return;}
+    _cred={email,senha};
+    if(document.getElementById('loginLembrar').checked){
+      try{localStorage.setItem('fc_cred',btoa(unescape(encodeURIComponent(JSON.stringify(_cred)))));}catch(_){}
+    }
+    document.getElementById('userLbl').textContent=data.nome||email;
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app-shell').style.display='block';
+    carregarDados();
+  }catch(e){
+    erro.textContent='Erro de conexão. Tente novamente.';
+    btn.disabled=false;btn.textContent='Entrar';
+  }
+}
+
+function logout(){
+  try{localStorage.removeItem('fc_cred');}catch(_){}
+  _cred={email:'',senha:''};
+  location.reload();
+}
+
+async function carregarDados(){
+  try{
+    const resp=await fetch(API_POST,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({acao:'dados',tipo:'forecast',email:_cred.email,senha:_cred.senha})
+    });
+    const data=await resp.json();
+    if(data.status!=='ok')throw new Error(data.message);
+    REGIOES=data.regioes||{};
+    DADOS=(data.rows||[]).map(r=>({
+      mes_ano:   String(r.mes_ano||'').replace(/[^0-9\-]/g,'').slice(0,7),
+      loja:      String(r.loja||''),
+      linha_dre: String(r.linha_dre||'').trim(),
+      realizado: Number(r.realizado||0),
+      orcado:    Number(r.orcado||0),
+    }));
+    const lojas=[...new Set(DADOS.map(r=>r.loja))].sort();
+    const grupos=[...new Set(Object.values(REGIOES))].sort();
+    lojas.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;document.getElementById('fLoja').appendChild(o);});
+    grupos.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;document.getElementById('fRegiao').appendChild(o);});
+    document.getElementById('loading').style.display='none';
+    document.getElementById('main-content').style.display='block';
+    renderTudo();
+  }catch(e){
+    document.getElementById('loading').style.display='none';
+    document.getElementById('error-box').style.display='block';
+    document.getElementById('error-msg').textContent='Erro: '+e.message;
+  }
+}
+
+// Auto-login se houver credencial salva
+(function(){
+  try{
+    const raw=localStorage.getItem('fc_cred');
+    if(raw){
+      const c=JSON.parse(decodeURIComponent(escape(atob(raw))));
+      if(c&&c.email&&c.senha){
+        document.getElementById('loginEmail').value=c.email;
+        document.getElementById('loginSenha').value=c.senha;
+        // valida em segundo plano
+        fazerLogin();
+      }
+    }
+  }catch(_){}
+})();
+</script>
+</body>
+</html>

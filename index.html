@@ -1046,31 +1046,54 @@ function exportarExcel(){
 }
 
 // ── Init ──
-// ══ AUTENTICAÇÃO ══
-const API_POST='https://script.google.com/macros/s/AKfycbwvexaKHYEXLzHVMK50_ObejPlWJaGVbS7ecs5Rdi4BDiyfOABsld7_hJO-tqlaqiXX/exec';
-let _cred={email:'',senha:''};
+// ══ AUTENTICAÇÃO (modelo GET + validação no cliente, como o Painel de Tarefas) ══
+const API_URL='https://script.google.com/macros/s/AKfycbwvexaKHYEXLzHVMK50_ObejPlWJaGVbS7ecs5Rdi4BDiyfOABsld7_hJO-tqlaqiXX/exec';
+// Chave de acesso — precisa ser idêntica à CHAVE_ACESSO do Codigo.gs
+const CHAVE_ACESSO='7c19a4f2e8b6d035a1f94c72e0b8d6153ea4c9f7b2d81065';
+
+let _USUARIOS=[];     // lista carregada do backend
+let _payloadCache=null; // guarda rows/regioes já carregados
+
+// Busca tudo do backend (dados + usuários) via GET
+async function _carregarBackend(){
+  const url=API_URL+'?chave='+encodeURIComponent(CHAVE_ACESSO);
+  const resp=await fetch(url,{method:'GET'});
+  if(!resp.ok)throw new Error('HTTP '+resp.status);
+  const data=await resp.json();
+  if(data.status!=='ok')throw new Error(data.message||'Falha no backend');
+  return data;
+}
 
 async function fazerLogin(){
-  const email=document.getElementById('loginEmail').value.trim();
-  const senha=document.getElementById('loginSenha').value.trim();
+  const email=document.getElementById('loginEmail').value.trim().toLowerCase();
+  const senha=document.getElementById('loginSenha').value;
   const erro=document.getElementById('login-erro');
   const btn=document.querySelector('.login-btn');
   if(!email||!senha){erro.textContent='Preencha e-mail e senha.';return;}
   erro.textContent='';btn.disabled=true;btn.textContent='Entrando...';
   try{
-    const fd=new FormData();
-    fd.append('payload',JSON.stringify({acao:'login',email,senha}));
-    const resp=await fetch(API_POST,{method:'POST',body:fd});
-    const data=await resp.json();
-    if(data.status!=='ok'){erro.textContent=data.message||'Falha no login.';btn.disabled=false;btn.textContent='Entrar';return;}
-    _cred={email,senha};
-    if(document.getElementById('loginLembrar').checked){
-      try{localStorage.setItem('fc_cred',btoa(unescape(encodeURIComponent(JSON.stringify(_cred)))));}catch(_){}
+    // Se ainda não carregou o backend, carrega agora
+    if(!_payloadCache){
+      _payloadCache=await _carregarBackend();
+      _USUARIOS=_payloadCache.usuarios||[];
     }
-    document.getElementById('userLbl').textContent=data.nome||email;
+    // Valida o login no navegador (senha em texto na aba USUARIOS)
+    const u=_USUARIOS.find(x=>(x.email||'').toLowerCase()===email);
+    if(!u){erro.textContent='E-mail não encontrado.';btn.disabled=false;btn.textContent='Entrar';return;}
+    if(u.ativo && !['sim','s','true','1','ativo','x'].includes(String(u.ativo).toLowerCase())){
+      erro.textContent='Usuário inativo.';btn.disabled=false;btn.textContent='Entrar';return;
+    }
+    if(String(u.senha)!==String(senha)){erro.textContent='Senha incorreta.';btn.disabled=false;btn.textContent='Entrar';return;}
+    // Login OK
+    if(document.getElementById('loginLembrar').checked){
+      try{localStorage.setItem('fc_login',email);}catch(_){}
+    }else{
+      try{localStorage.removeItem('fc_login');}catch(_){}
+    }
+    document.getElementById('userLbl').textContent=u.nome||email;
     document.getElementById('login-screen').style.display='none';
     document.getElementById('app-shell').style.display='block';
-    carregarDados();
+    montarDados(_payloadCache);
   }catch(e){
     erro.textContent='Erro de conexão. Tente novamente.';
     btn.disabled=false;btn.textContent='Entrar';
@@ -1078,18 +1101,13 @@ async function fazerLogin(){
 }
 
 function logout(){
-  try{localStorage.removeItem('fc_cred');}catch(_){}
-  _cred={email:'',senha:''};
+  try{localStorage.removeItem('fc_login');}catch(_){}
   location.reload();
 }
 
-async function carregarDados(){
+// Monta os dados já carregados na tela
+function montarDados(data){
   try{
-    const fd=new FormData();
-    fd.append('payload',JSON.stringify({acao:'dados',tipo:'forecast',email:_cred.email,senha:_cred.senha}));
-    const resp=await fetch(API_POST,{method:'POST',body:fd});
-    const data=await resp.json();
-    if(data.status!=='ok')throw new Error(data.message);
     REGIOES=data.regioes||{};
     DADOS=(data.rows||[]).map(r=>({
       mes_ano:   String(r.mes_ano||'').replace(/[^0-9\-]/g,'').slice(0,7),
@@ -1112,19 +1130,11 @@ async function carregarDados(){
   }
 }
 
-// Auto-login se houver credencial salva
+// Pré-carrega o e-mail lembrado (não faz login automático — pede a senha)
 (function(){
   try{
-    const raw=localStorage.getItem('fc_cred');
-    if(raw){
-      const c=JSON.parse(decodeURIComponent(escape(atob(raw))));
-      if(c&&c.email&&c.senha){
-        document.getElementById('loginEmail').value=c.email;
-        document.getElementById('loginSenha').value=c.senha;
-        // valida em segundo plano
-        fazerLogin();
-      }
-    }
+    const em=localStorage.getItem('fc_login');
+    if(em){document.getElementById('loginEmail').value=em;document.getElementById('loginSenha').focus();}
   }catch(_){}
 })();
 </script>

@@ -1095,7 +1095,8 @@ async function fazerLogin(){
     document.getElementById('app-shell').style.display='block';
     montarDados(_payloadCache);
   }catch(e){
-    erro.textContent='Erro de conexão. Tente novamente.';
+    console.error('Erro no login:', e);
+    erro.textContent='Erro de conexão: '+(e && e.message ? e.message : 'falha desconhecida');
     btn.disabled=false;btn.textContent='Entrar';
   }
 }

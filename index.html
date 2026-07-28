@@ -1060,7 +1060,6 @@ async function fazerLogin(){
   try{
     const resp=await fetch(API_POST,{
       method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({acao:'login',email,senha})
     });
     const data=await resp.json();
@@ -1089,7 +1088,6 @@ async function carregarDados(){
   try{
     const resp=await fetch(API_POST,{
       method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({acao:'dados',tipo:'forecast',email:_cred.email,senha:_cred.senha})
     });
     const data=await resp.json();

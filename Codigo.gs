@@ -69,12 +69,27 @@ function doGet(e) {
     const shU = ss.getSheetByName(SHEET_USERS);
     if (shU) {
       const dataU = shU.getDataRange().getValues();
-      const hU = dataU[0].map(function(x){ return String(x).trim().toLowerCase(); });
-      const uNome  = hU.indexOf('nome');
-      const uEmail = hU.indexOf('email');
-      const uSenha = hU.indexOf('senha');
-      const uPapel = hU.indexOf('papel');
-      const uAtivo = hU.indexOf('ativo');
+      // Normaliza os cabeçalhos (minúsculo, sem acento/espaço/pontuação) e busca por
+      // palavra-chave, pois a aba pode ter nomes como "E-mail (login)" ou "Senha Inicial"
+      // em vez do nome exato da coluna.
+      const hU = dataU[0].map(function(x){
+        return String(x).trim().toLowerCase()
+          .normalize('NFD').replace(/[̀-ͯ]/g, '')
+          .replace(/[^a-z0-9]/g, '');
+      });
+      const _col = function(keywords){
+        for (var i = 0; i < hU.length; i++) {
+          for (var k = 0; k < keywords.length; k++) {
+            if (hU[i].indexOf(keywords[k]) >= 0) return i;
+          }
+        }
+        return -1;
+      };
+      const uNome  = _col(['nome']);
+      const uEmail = _col(['email', 'mail']);
+      const uSenha = _col(['senha']);
+      const uPapel = _col(['papel', 'perfil', 'role']);
+      const uAtivo = _col(['ativo', 'status']);
       dataU.slice(1).forEach(function(r){
         const email = uEmail >= 0 ? String(r[uEmail] || '').trim() : '';
         if (!email) return;
